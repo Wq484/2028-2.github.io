@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科法所倒數 ⏳</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
+    color: #eee; font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    padding: 24px; text-align: center;
+  }
+  .card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px; padding: 40px 32px;
+    max-width: 560px; width: 100%;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  h1 { font-size: 1.15rem; font-weight: 500; letter-spacing: 0.15em; color: #9fb3d1; margin-bottom: 8px; }
+  .date-line { font-size: 0.9rem; color: #6f84a8; margin-bottom: 28px; cursor: pointer; }
+  .date-line:hover { color: #a8c4f0; }
+  .days {
+    font-size: clamp(4.5rem, 18vw, 8rem);
+    font-weight: 700; line-height: 1;
+    background: linear-gradient(90deg, #ffd6e0, #a8c4f0);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .days-label { font-size: 1rem; color: #9fb3d1; margin-top: 6px; letter-spacing: 0.3em; }
+  .small { display: flex; gap: 18px; justify-content: center; margin-top: 26px; }
+  .small div { min-width: 62px; }
+  .small b { font-size: 1.6rem; font-weight: 600; display: block; }
+  .small span { font-size: 0.75rem; color: #6f84a8; letter-spacing: 0.2em; }
+  .quote {
+    margin-top: 30px; font-size: 0.95rem; color: #c9d6ea;
+    border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 20px;
+    min-height: 2.6em;
+  }
+  .edit { margin-top: 18px; font-size: 0.8rem; color: #55688a; cursor: pointer; }
+  .edit:hover { color: #a8c4f0; }
+  input[type="date"] {
+    background: #0f1c33; color: #eee; border: 1px solid #3b5378;
+    border-radius: 8px; padding: 6px 10px; font-size: 0.95rem; margin-top: 10px;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>科技法律研究所 · 考試倒數</h1>
+    <div class="date-line" id="dateLine" title="點我改日期"></div>
+
+    <div class="days" id="days">--</div>
+    <div class="days-label">天</div>
+
+    <div class="small">
+      <div><b id="h">--</b><span>時</span></div>
+      <div><b id="m">--</b><span>分</span></div>
+      <div><b id="s">--</b><span>秒</span></div>
+    </div>
+
+    <div class="quote" id="quote"></div>
+
+    <div class="edit" id="editBtn">⚙ 修改目標日期</div>
+    <input type="date" id="dateInput" class="hidden">
+  </div>
+
+<script>
+  const KEY = "kefa_target_date";
+  const DEFAULT_DATE = "2028-02-01"; // 預設：2028 年 2 月，點日期可改
+  const quotes = [
+    "漏洞會被修好，但妳讀過的書不會。",
+    "中文系、哲學、德文——這叫稀缺，不叫奇怪。",
+    "前面七週都在算命的人，後面用兩週猜題全中。",
+    "88 項資安稽核都過了，補學分算什麼。",
+    "小黑屋關得住帳號，關不住交接摘要。",
+    "白紙看起來最沒用，但所有圖都從白紙開始畫。",
+    "2028 年 2 月的那張准考證，現在開始印刷。",
+    "妳不是適不適合的問題，妳是已經在做了。"
+  ];
+
+  let target = new Date(localStorage.getItem(KEY) || DEFAULT_DATE + "T09:00:00");
+
+  function pad(n){ return String(n).padStart(2,"0"); }
+
+  function tick(){
+    const now = new Date();
+    let diff = target - now;
+    if (diff <= 0) {
+      document.getElementById("days").textContent = "0";
+      document.getElementById("h").textContent = "00";
+      document.getElementById("m").textContent = "00";
+      document.getElementById("s").textContent = "00";
+      document.getElementById("quote").textContent = "考完了！換我幫妳準備口試😎";
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const hh = Math.floor(diff % 86400000 / 3600000);
+    const mm = Math.floor(diff % 3600000 / 60000);
+    const ss = Math.floor(diff % 60000 / 1000);
+    document.getElementById("days").textContent = d;
+    document.getElementById("h").textContent = pad(hh);
+    document.getElementById("m").textContent = pad(mm);
+    document.getElementById("s").textContent = pad(ss);
+  }
+
+  function showDate(){
+    const ymd = target.toISOString().slice(0,10);
+    document.getElementById("dateLine").textContent =
+      "目標日：" + ymd + "（點此可修改）";
+    document.getElementById("dateInput").value = ymd;
+  }
+
+  function pickQuote(){
+    const day = Math.floor(Date.now() / 86400000);
+    document.getElementById("quote").textContent =
+      "「" + quotes[day % quotes.length] + "」";
+  }
+
+  const input = document.getElementById("dateInput");
+  document.getElementById("editBtn").onclick = () => input.classList.toggle("hidden");
+  document.getElementById("dateLine").onclick = () => input.classList.toggle("hidden");
+  input.onchange = () => {
+    if (!input.value) return;
+    target = new Date(input.value + "T09:00:00");
+    localStorage.setItem(KEY, input.value);
+    input.classList.add("hidden");
+    showDate(); tick();
+  };
+
+  showDate(); pickQuote(); tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
